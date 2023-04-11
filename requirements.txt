@@ -1,0 +1,6 @@
+deepcell==0.10.1
+scikit-image==0.18.3
+numpy
+tqdm
+tifffile
+seaborn
