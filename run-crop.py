@@ -8,6 +8,7 @@ from utils import make_log_dir, get_subdirs
 parser = argparse.ArgumentParser(description='Crop cells')
 parser.add_argument('-i', '--input', help='Date stamped directory containing subdirectories of inputs', required=True)
 parser.add_argument('-l', '--labels', help='If specific cells from run-callout.py need to be cropped', action='store_true')
+parser.add_argument('-a', '--arrange', help='Arrange channels in specified order', action='store_true')
 parser.add_argument('-o', '--output', help='Path to top level directory to write sample-specific subdirectories of crops under')
 parser.add_argument('-n', '--normalize', help='Robust saturation + min/max normalization per scene', action='store_true')
 parser.add_argument('-c', '--cpus', help='Number CPUs to request from scheduler', default=4, type=int)
@@ -53,6 +54,11 @@ try:
         else:
             label_dir = None
         
+        if args.arrange:
+            markers_dir = os.path.abspath(os.path.join(args.input, s, "markers.csv"))
+        else:
+            markers_dir = None
+        
         if args.output:
             save_dir = os.path.abspath(os.path.join(args.output, s))
             if os.path.isdir(args.output) == False:
@@ -64,8 +70,8 @@ try:
         crop_length = args.crop_length                        
         
         if args.normalize:
-             python_script_args = "--segmentation_path {} --mti_path {} --labels {} --save_dir {} --save_prefix {} --crop_length {} --robust_saturation --min_max".format(
-            seg_file, mti_file, label_dir, save_dir, s, crop_length
+             python_script_args = "--segmentation_path {} --mti_path {} --labels {} --arrange {} --save_dir {} --save_prefix {} --crop_length {} --robust_saturation --min_max".format(
+            seg_file, mti_file, label_dir, markers_dir, save_dir, s, crop_length
         )
         else:
             python_script_args = "--segmentation_path {} --mti_path {} --labels {} --save_dir {} --save_prefix {} --crop_length {}".format(
