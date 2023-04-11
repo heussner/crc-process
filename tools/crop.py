@@ -6,6 +6,7 @@ from skimage.measure import regionprops, label
 from skimage.transform import rotate
 from typing import Any, Tuple, Text, List, Union
 import numpy as np
+import pandas as pd
 from glob import glob
 import argparse
 from random import shuffle, sample
@@ -50,6 +51,7 @@ def segmentation_crops_to_disk(
     mti = as_dtype(mti, dtype)
     
     if args.arrange != None:
+        markers_df = pd.read_csv(args.arrange)
         mti = order_channels(markers_df, mti)
     
     if saturation:

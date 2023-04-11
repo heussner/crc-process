@@ -74,8 +74,8 @@ try:
             seg_file, mti_file, label_dir, markers_dir, save_dir, s, crop_length
         )
         else:
-            python_script_args = "--segmentation_path {} --mti_path {} --labels {} --save_dir {} --save_prefix {} --crop_length {}".format(
-                seg_file, mti_file, label_dir, save_dir, s, crop_length
+            python_script_args = "--segmentation_path {} --mti_path {} --labels {} --arrange {} --save_dir {} --save_prefix {} --crop_length {}".format(
+                seg_file, mti_file, label_dir, markers_dir, save_dir, s, crop_length
             )
         
         bash_string = f'bash {bash_path} {python_script_args}'
