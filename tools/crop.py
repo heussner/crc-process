@@ -21,6 +21,7 @@ def segmentation_crops_to_disk(
     crop_length: int = 64,
     dtype: Text = "uint16",
     labels=None,
+    arrange=None,
     min_max=False,
     robust_saturation=False,
     saturation=False,
@@ -47,6 +48,9 @@ def segmentation_crops_to_disk(
 
     mti = load_mti(mti_path)
     mti = as_dtype(mti, dtype)
+    
+    if args.arrange != None:
+        mti = order_channels(markers_df, mti)
     
     if saturation:
         mti = saturate(mti)
@@ -558,6 +562,19 @@ def zero_orient(crop: np.ndarray, radians: float) -> np.ndarray:
     rotated = rotated.astype(crop.dtype)
     return rotated
 
+def arrange_channels(markers_df, mti):
+    #hard-coded channel order
+    order = {'CD45':0,'CK':1,'DAPI':2}
+    ordered_mti = mti.deepcopy()
+    markers = zip(markers_df["channel"].tolist(),markers_df["marker_name"].tolist())
+    markers = sorted(markers, key=lambda x: x[1])
+    
+    for i, m in markers:
+        if i != order[m]:
+            ordered_mti[:,:,truth[m]] = mti[:,:,i].copy()
+
+    return ordered_mti
+
 
 def main(
     segmentation_path,
@@ -583,6 +600,7 @@ def main(
         crop_length=crop_length,
         dtype=dtype,
         labels=labels,
+        arrange=arrange,
         min_max=min_max,
         robust_saturation=robust_saturation,
         saturation=saturation,
@@ -634,6 +652,12 @@ if __name__ == "__main__":
         help="Path to dict of specific labels to crop",
     )
     parser.add_argument(
+        "--arrange",
+        type=str,
+        default=None,
+        help="Path to markers file",
+    )
+    parser.add_argument(
         "--crop_length",
         default=64,
         type=int,
@@ -677,6 +701,7 @@ if __name__ == "__main__":
         bool(args.fix_orientation),
         args.dtype,
         args.labels,
+        args.arrange,
         args.min_max,
         args.robust_saturation,
         args.saturation,
