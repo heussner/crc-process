@@ -14,8 +14,7 @@ parser = argparse.ArgumentParser(description='Threshold a single sample')
 parser.add_argument('-i', '--image', help='Input image path', required=True)
 parser.add_argument('-s', '--segmentation', help='Input segmentation folder', required=True)
 parser.add_argument('-t', '--table', help='Input feature table path', required=True)
-parser.add_argument('-m', '--markers', help='List of channel names (markers) starting from 0',nargs='+', default='Dapi',required=True, type=str)
-parser.add_argument('-mi', '--marker-indexes', help='Corresponding marker indexes starting from 0',nargs='+', default=0,required=True, type=int)
+parser.add_argument('-m', '--markers', help='List of channel names (markers) starting from 0',nargs='+', required=True, type=str)
 parser.add_argument('-o', '--output', help='Output directory', required=True)
 parser.add_argument('-n', '--name', help='File name', required=True, type=str)
 parser.add_argument('-c', '--compartment',help='Compartment to threshold', choices=["whole-cell", "nuclear", "both"], default="whole-cell", type=str)
@@ -44,7 +43,7 @@ threshold_data = {}
 print('Starting thresholding...')
 for msk in mask_dict:
     mask = mask_dict[msk].copy()
-    for i,m in zip(args.marker_indexes, args.markers):
+    for i,m in enumerate(args.markers):
         print('Thresholding the ' + m + ' channel of the ' + msk + ' mask')
         #isolate channel
         img = image[:,:,i].copy()
