@@ -67,9 +67,13 @@ try:
         #thresholds all markers
         markers = markers_df["marker_name"].tolist()
         marker_indexes = markers_df["channel"].tolist()
+        #arrange marker names in order of channels
+        zipped = zip(marker_indexes, markers)
+        zipped = sorted(zipped, key=lambda x: x[0])
+        markers = [list(t) for t in zip(*zipped)][1]
         #markers_df.loc[markers_df["seg_type"] == "membrane"] for only membrane
-        python_script_args = "-i {} -s {} -t {} -m {} -mi {} -o {} -n{} -c {}".format(
-            image_file, seg_dir, table_file, " ".join([str(i) for i in markers]), " ".join([str(i) for i in marker_indexes]), out_dir, s, args.compartment)
+        python_script_args = "-i {} -s {} -t {} -m {} -o {} -n{} -c {}".format(
+            image_file, seg_dir, table_file, " ".join([str(i) for i in markers]), out_dir, s, args.compartment)
        
         bash_string = f'bash {bash_path} {python_script_args}'
         if args.exacloud: bash_string = "srun -p gpu --gres gpu:{} --time {} --mem {}gb {} {}".format(
