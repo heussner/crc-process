@@ -44,11 +44,11 @@ try:
         markers_df = pd.read_csv(os.path.join(args.input, s, "markers.csv"))
         markers_df = markers_df.replace({np.nan: None})
         markers = markers_df[markers_df["seg_type"] == "membrane"]["marker_name"].tolist() #only membrane markers. need better integration
-        PPR_thresholds = []
-        for m in markers:
-            t = input(m + ' positive pixel ratio threshold:')
-            PPR_thresholds.append(t)
-        #PPR_thresholds = [0.7, 0.7]#hardcoded, based on elbow plots in :
+        #PPR_thresholds = []
+        #for m in markers:
+        #    t = input(m + ' positive pixel ratio threshold:')
+        #    PPR_thresholds.append(t)
+        PPR_thresholds = [0.5, 0.7]#hardcoded, based on elbow plots in :
                                  
         python_script_args = "--table {} --output {} --markers {} --PPR_thresholds {} --save_prefix {} --compartment {}".format(
             table_file, out_dir, " ".join([m for m in markers]), " ".join([str(t) for t in PPR_thresholds]), s, "whole-cell"

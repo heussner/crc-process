@@ -564,16 +564,17 @@ def zero_orient(crop: np.ndarray, radians: float) -> np.ndarray:
     rotated = rotated.astype(crop.dtype)
     return rotated
 
-def arrange_channels(markers_df, mti):
+def order_channels(markers_df, mti):
     #hard-coded channel order
     order = {'CD45':0,'CK':1,'DAPI':2}
-    ordered_mti = mti.deepcopy()
+    ordered_mti = mti.copy()
     markers = zip(markers_df["channel"].tolist(),markers_df["marker_name"].tolist())
     markers = sorted(markers, key=lambda x: x[1])
     
     for i, m in markers:
         if i != order[m]:
-            ordered_mti[:,:,truth[m]] = mti[:,:,i].copy()
+            ordered_mti[:,:,order[m]] = mti[:,:,i].copy()
+            print('moved ' + m + ' in position ' + str(i) + ' to position' + str(order[m]))
 
     return ordered_mti
 
@@ -586,6 +587,7 @@ def main(
     fix_orientation,
     dtype,
     labels,
+    arrange,
     min_max,
     robust_saturation,
     saturation,
