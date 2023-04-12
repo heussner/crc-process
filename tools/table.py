@@ -57,7 +57,7 @@ elif args.compartment == "nuclear":
     nuc_table = pd.DataFrame(regionprops_table(nuc_mask.astype(int), im, properties=args.properties))
                                     
     for p in p_names:
-        nuc_table = nuc_table.rename(columns={p:'nuclei_'+p})
+        nuc_table = nuc_table.rename(columns={p:'nucleus_'+p})
     
     for i,l in enumerate(args.markers):
         nuc_table = nuc_table.rename(columns={'nucleus_mean_intensity-'+str(i):'nucleus_'+l+'_mean_intensity'})
