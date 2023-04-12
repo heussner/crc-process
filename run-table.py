@@ -64,6 +64,11 @@ try:
         markers_df = pd.read_csv(os.path.join(args.input, s, "markers.csv"))
         markers_df = markers_df.replace({np.nan: None})
         markers = markers_df["marker_name"].tolist()
+        marker_indexes = markers_df["channel"].tolist()
+        #arrange marker names in order of channels
+        zipped = zip(marker_indexes, markers)
+        zipped = sorted(zipped, key=lambda x: x[0])
+        markers = [list(t) for t in zip(*zipped)][1]
         regionprops = args.regionprops
         python_script_args = "-i {} -s {} -o {} -m {} -n{} -c {} -p {}".format(
             image_file, seg_dir, out_dir, " ".join([str(i) for i in markers]), s,  args.compartment, " ".join([str(i) for i in regionprops]))
