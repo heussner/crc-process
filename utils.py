@@ -11,6 +11,9 @@ from skimage.measure import regionprops_table
 import shutil
 import pandas as pd
 import sys
+import urllib3
+import json
+import traceback
 
 def make_log_dir():
     log_dir = ".logs"
@@ -121,7 +124,22 @@ def reorder_channels(args):
             tmp = [im[c, :, :] for c in channels]
             im = np.stack(tmp, axis=0)
             imwrite(impath, im)
+            
+def slack_notification(args):
+    try:
+        slack_message = {'text': message}
 
+        http = urllib3.PoolManager()
+        response = http.request('POST',
+                                webhook_url,
+                                body = json.dumps(slack_message),
+                                headers = {'Content-Type': 'application/json'},
+                                retries = False)
+    except:
+        traceback.print_exc()
+
+    return True
+            
 def count_false_positives(args):
     subdirs = get_subdirs(args)
     print("Counting false positives for {} samples".format(len(subdirs)))
@@ -217,6 +235,7 @@ if __name__ == "__main__":
     parser.add_argument('--write-seg-bounds', help='Extract and write segmentation boundaries', action='store_true')
     parser.add_argument('--remove-seg-bounds', help='Remove segmentation boundaries', action='store_true')
     parser.add_argument('--remove-directories', help='Remove directory specified with the --dir flag', action='store_true')
+    parser.add_argument('--slack', help='Send progress updates via slack notification', action='store_true')
     parser.add_argument('--count-false-positives', help='Count false positives', action='store_true')
     parser.add_argument('--compute-major-axis-dist', help='Compute major axis length distribution', action='store_true')
     parser.add_argument('--mpp', help='Microns per pixel', type=float, default=0.325)
@@ -238,6 +257,8 @@ if __name__ == "__main__":
         split_channels(args)
     if args.write_seg_bounds:
         write_seg_bounds(args)
+    if args.slack:
+        slack_notification(args)
     if args.compute_major_axis_dist:
         compute_major_axis_dist(args)
     if args.count_false_positives:
