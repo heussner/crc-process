@@ -55,11 +55,6 @@ for msk in mask_dict:
         max_int = 1.5*(mu + 3*std)
         img[img > max_int] = max_int
 
-        #store maximum threshold data (MPS - maximum positive threshold
-        threshold_data[msk+'_'+m+'_fgd_mu'] = mu
-        threshold_data[msk+'_'+m+'_fgd_std'] = std
-        threshold_data[msk+'_'+m+'_positive_ceiling'] = max_int
-
         #separate background/foreground
         img_fgd = np.where(mask.astype(int).copy()==0, np.nan, img.copy())
         img_bgd = np.where(mask.astype(int).copy() != 0, np.nan, img.copy())
@@ -79,10 +74,15 @@ for msk in mask_dict:
         else:
             threshold = mu_b + 3 * std_b
             max_area = table[msk+'_area'].quantile(0.999)
+        
+        #store maximum threshold data (MPS - maximum positive threshold
+        threshold_data[msk+'_'+m+'_fgd_mu'] = mu_f
+        threshold_data[msk+'_'+m+'_fgd_std'] = std_f
+        threshold_data[msk+'_'+m+'_positive_ceiling'] = max_int
 
         #store minimum threshold data (PT - positive threshold)
-        threshold_data[msk+'_'+m+'_bgd_mu'] = mu
-        threshold_data[msk+'_'+m+'_bgd_std'] = std
+        threshold_data[msk+'_'+m+'_bgd_mu'] = mu_b
+        threshold_data[msk+'_'+m+'_bgd_std'] = std_b
         threshold_data[msk+'_'+m+'_positive_threshold'] = threshold
 
         #binarize image
