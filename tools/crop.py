@@ -23,9 +23,7 @@ def segmentation_crops_to_disk(
     dtype: Text = "uint16",
     labels=None,
     arrange=None,
-    min_max=False,
-    robust_saturation=False,
-    saturation=False,
+    normalize=False,
     max_cells=None
 ) -> None:
 
@@ -54,19 +52,25 @@ def segmentation_crops_to_disk(
         markers_df = pd.read_csv(args.arrange)
         mti = order_channels(markers_df, mti)
     
-    if saturation:
+    if normalize == 'percentile':
+        print("Applying percentile saturation")
         mti = saturate(mti)
-    elif robust_saturation:
-        print("Applying robust saturation")
-        mti = robust_saturate(mti, segmentation)
-    else:   
-        print("Skipping contrast limits adjustment...")
-    
-    if min_max:
         print("Min-max scaling")
         mti = min_max_scale(mti)
+
+    elif normalize == 'robust':
+        print("Applying robust saturation")
+        mti = robust_saturate(mti, segmentation)
+        print("Min-max scaling")
+        mti = min_max_scale(mti)
+    
+    elif normalize == 'min_max':
+        print('Skipping saturation...')
+        print("Min-max scaling")
+        mti = min_max_scale(mti)
+    
     else:
-        print("Skipping min-max scaling..")
+        print("Skipping normalization")
 
     check_shapes(mti.shape, segmentation.shape)
     make_save_dir(save_dir)
@@ -224,7 +228,6 @@ def load_segmentation(segmentation_path: Text) -> np.ndarray:
         f" {segmentation.shape}, dtype: {segmentation.dtype}"
     )
     return segmentation
-
 
 def load_mti_stack(mti_files: List[Text]) -> np.ndarray:
     """Build np.ndarray stack of MTI channels from list of files
@@ -566,7 +569,7 @@ def zero_orient(crop: np.ndarray, radians: float) -> np.ndarray:
 
 def order_channels(markers_df, mti):
     #hard-coded channel order
-    order = {'CD45':0,'CK':1,'DAPI':2}
+    order = {'DAPI':0,'CD45':1,'CK':2}
     ordered_mti = mti.copy()
     markers = zip(markers_df["channel"].tolist(),markers_df["marker_name"].tolist())
     markers = sorted(markers, key=lambda x: x[1])
@@ -588,9 +591,7 @@ def main(
     dtype,
     labels,
     arrange,
-    min_max,
-    robust_saturation,
-    saturation,
+    normalize,
     crop_length=None,
     max_cells=None,
 ):
@@ -605,9 +606,7 @@ def main(
         dtype=dtype,
         labels=labels,
         arrange=arrange,
-        min_max=min_max,
-        robust_saturation=robust_saturation,
-        saturation=saturation,
+        normalize=normalize,
         max_cells=max_cells
     )
 
@@ -668,9 +667,10 @@ if __name__ == "__main__":
         help="Crop dimension. If not provided will be computed. See data.data_bbox_max",
     )
     parser.add_argument(
-        "--min_max",
-        action='store_true',
-        help="Min-max scale the MTI image channel-wise before cropping",
+        "--normalize",
+        default='percentile',
+        type=str,
+        help="Normalization method",
     )
 
     def tuple_type(strings):
@@ -678,16 +678,6 @@ if __name__ == "__main__":
         mapped_float = map(float, strings.split(","))
         return tuple(mapped_float)
 
-    parser.add_argument(
-        "--saturation",
-        action='store_true',
-        help="Saturate upper and lower intensity percentiles channel-wise before cropping",
-    )
-    parser.add_argument(
-        "--robust_saturation",
-        action="store_true",
-        help="Robustly saturate image channel-wise before cropping",
-    )
     parser.add_argument(
         "--max_cells",
         type=int,
@@ -706,9 +696,7 @@ if __name__ == "__main__":
         args.dtype,
         args.labels,
         args.arrange,
-        args.min_max,
-        args.robust_saturation,
-        args.saturation,
+        args.normalize,
         args.crop_length,
         args.max_cells
     )

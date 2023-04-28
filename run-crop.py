@@ -10,7 +10,7 @@ parser.add_argument('-i', '--input', help='Date stamped directory containing sub
 parser.add_argument('-l', '--labels', help='If specific cells from run-callout.py need to be cropped', action='store_true')
 parser.add_argument('-a', '--arrange', help='Arrange channels in specified order', action='store_true')
 parser.add_argument('-o', '--output', help='Path to top level directory to write sample-specific subdirectories of crops under')
-parser.add_argument('-n', '--normalize', help='Robust saturation + min/max normalization per scene', action='store_true')
+parser.add_argument('-n', '--normalize', help='Normalization method',choices=["robust", "percentile", "min_max"])
 parser.add_argument('-c', '--cpus', help='Number CPUs to request from scheduler', default=4, type=int)
 parser.add_argument('-m', '--mem', help='Memory to request from the scheduler (in GB)', default=64, type=int)
 parser.add_argument('-t', '--time', help='Time string to request from the scheduler', default='1:00:00', type=str)
@@ -67,16 +67,12 @@ try:
                 os.makedirs(save_dir)
         else:
             save_dir = os.path.abspath(os.path.join(os.path.join(args.input, s, "crops")))
-        crop_length = args.crop_length                        
+        crop_length = args.crop_length
         
-        if args.normalize:
-             python_script_args = "--segmentation_path {} --mti_path {} --labels {} --arrange {} --save_dir {} --save_prefix {} --crop_length {} --robust_saturation --min_max".format(
-            seg_file, mti_file, label_dir, markers_dir, save_dir, s, crop_length
+        
+        python_script_args = "--segmentation_path {} --mti_path {} --labels {} --arrange {} --save_dir {} --save_prefix {} --crop_length {} --normalize {}".format(
+            seg_file, mti_file, label_dir, markers_dir, save_dir, s, crop_length, args.normalize
         )
-        else:
-            python_script_args = "--segmentation_path {} --mti_path {} --labels {} --arrange {} --save_dir {} --save_prefix {} --crop_length {}".format(
-                seg_file, mti_file, label_dir, markers_dir, save_dir, s, crop_length
-            )
         
         bash_string = f'bash {bash_path} {python_script_args}'
         if args.exacloud: bash_string = "srun -p gpu --gres gpu:{} --time {} --mem {}gb {} {}".format(
