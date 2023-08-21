@@ -23,10 +23,10 @@ The markers.csv file should be organized as so:
 |- channel          # zero-indexed channel integer for that marker. note that channels need not be ordered
 |- marker_name      # corresonds to the protein or fluorophore.
 |- seg_type         # indicates whether the marker is a nuclear/membrane marker so segmentation knows which channels
-                    # only a single row should include the "nuclear" label value; however, multiple "membrane" markers can be used
-                    # if you label multiple channels as "membrane" then the `projection` column must be filled in the first row.
+                   # only a single row should include the "nuclear" label value; however, multiple "membrane" markers can be used
+                   # if you label multiple channels as "membrane" then the `projection` column must be filled in the first row.
 |- projection       # tells Mesmer how to combine the multiple "membrane" marker channels
-                    # supported values are "mean" and "max" corresponding to mean or maximum projection of the "membrane" labeled channels
+                   # supported values are "mean" and "max" corresponding to mean or maximum projection of the "membrane" labeled channels
 ```
 Next, run scripts in this order to make use of the full pipeline. for troubleshooting, log files are stored in the sample directory in .log folder.
 1. make-inputs.py: takes Zeiss-produced .czi image and creates a dated directory in which results will be stored.
