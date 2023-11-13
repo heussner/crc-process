@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import os
 import pandas as pd
-from skimage.io import imread
+from skimage.io import imread, imshow
 from skimage.measure import regionprops_table
 import pickle
 
@@ -24,12 +24,16 @@ im = imread(args.image)
 if args.compartment == "both":
     nuc_mask = imread(os.path.join(args.segmentation, [i for i in masks if "NUC" in i][0]))
     cell_mask = imread(os.path.join(args.segmentation, [i for i in masks if "CELL" in i][0]))
+    print(nuc_mask.shape)
+    print(im.shape)
 elif args.compartment == "nuclear":
     nuc_mask = imread(os.path.join(args.segmentation, [i for i in masks if "NUC" in i][0]))
 else:
     cell_mask = imread(os.path.join(args.segmentation, [i for i in masks if "CELL" in i][0]))
 
-print("Loaded masks from {args.segmentation}")
+print("Loaded masks from {}".format(args.segmentation))
+
+print("Making feature tables...")
 
 #make feature tables, rename columns to specify compartment/marker
 if args.compartment == "both":

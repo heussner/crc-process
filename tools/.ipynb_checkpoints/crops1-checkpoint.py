@@ -12,6 +12,24 @@ import argparse
 from random import shuffle, sample
 import pickle
 
+parser = argparse.ArgumentParser(description='Crop cells from a single sample')
+parser.add_argument("--segmentation_path", type=str, required=True, help="Path to segmentation file")
+parser.add_argument("--mti_path",type=str,required=True,help="Path to directory or file containing MTI data for cropping")
+parser.add_argument("--save_dir",type=str,required=True,help="Path to directory to save cropped data in")
+parser.add_argument("--save_prefix",type=str,required=True,help="Prefix string for cropped image file names")
+parser.add_argument("--fix_orientation",type=int,default=0,help="Fix orientation of crops wrt major axis")
+parser.add_argument("--dtype",type=str,choices=["uint16", "uint8"],default="uint16",help="Data type to save cropped images with (uint8 or uint16)")
+parser.add_argument("--labels",type=str,default=None,help="Path to dict of specific labels to crop")
+parser.add_argument("--arrange",type=str,default=None,help="Path to markers file")
+parser.add_argument("--crop_length",default=64,type=int,help="Crop dimension. If not provided will be computed. See data.data_bbox_max")
+parser.add_argument("--normalize",default='none',type=str,help="Normalization method")
+parser.add_argument("--max_cells",type=int,default=None,help="Max number of cells to crop from image. If none, crop all.")
+args = parser.parse_args()
+
+def tuple_type(strings):
+    strings = strings.replace("(", "").replace(")", "")
+    mapped_float = map(float, strings.split(","))
+    return tuple(mapped_float)
 
 def segmentation_crops_to_disk(
     segmentation_path: Text,
@@ -584,122 +602,16 @@ def order_channels(markers_df, mti):
 
     return ordered_mti
 
-
-def main(
-    segmentation_path,
-    mti_path,
-    save_dir,
-    save_prefix,
-    fix_orientation,
-    dtype,
-    labels,
-    arrange,
-    normalize,
-    crop_length=None,
-    max_cells=None,
-):
-
-    segmentation_crops_to_disk(
-        segmentation_path,
-        mti_path,
-        save_dir,
-        save_prefix=save_prefix,
-        fix_orientation=fix_orientation,
-        crop_length=crop_length,
-        dtype=dtype,
-        labels=labels,
-        arrange=arrange,
-        normalize=normalize,
-        max_cells=max_cells
-    )
-
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--segmentation_path", type=str, required=True, help="Path to segmentation file"
-    )
-    parser.add_argument(
-        "--mti_path",
-        type=str,
-        required=True,
-        help="Path to directory or file containing MTI data for cropping",
-    )
-    parser.add_argument(
-        "--save_dir",
-        type=str,
-        required=True,
-        help="Path to directory to save cropped data in",
-    )
-    parser.add_argument(
-        "--save_prefix",
-        type=str,
-        required=True,
-        help="Prefix string for cropped image file names",
-    )
-    parser.add_argument(
-        "--fix_orientation",
-        type=int,
-        default=0,
-        help="Fix orientation of crops wrt major axis",
-    )
-    parser.add_argument(
-        "--dtype",
-        type=str,
-        choices=["uint16", "uint8"],
-        default="uint16",
-        help="Data type to save cropped images with (uint8 or uint16)",
-    )
-    parser.add_argument(
-        "--labels",
-        type=str,
-        default=None,
-        help="Path to dict of specific labels to crop",
-    )
-    parser.add_argument(
-        "--arrange",
-        type=str,
-        default=None,
-        help="Path to markers file",
-    )
-    parser.add_argument(
-        "--crop_length",
-        default=64,
-        type=int,
-        help="Crop dimension. If not provided will be computed. See data.data_bbox_max",
-    )
-    parser.add_argument(
-        "--normalize",
-        default='none',
-        type=str,
-        help="Normalization method",
-    )
-
-    def tuple_type(strings):
-        strings = strings.replace("(", "").replace(")", "")
-        mapped_float = map(float, strings.split(","))
-        return tuple(mapped_float)
-
-    parser.add_argument(
-        "--max_cells",
-        type=int,
-        default=None,
-        help="Max number of cells to crop from image. If none, crop all."
-    )
-
-    args = parser.parse_args()
-
-    main(
+segmentation_crops_to_disk(
         args.segmentation_path,
         args.mti_path,
         args.save_dir,
-        args.save_prefix,
-        bool(args.fix_orientation),
-        args.dtype,
-        args.labels,
-        args.arrange,
-        args.normalize,
-        args.crop_length,
-        args.max_cells
+        save_prefix=args.save_prefix,
+        fix_orientation=args.fix_orientation,
+        crop_length=args.crop_length,
+        dtype=args.dtype,
+        labels=args.labels,
+        arrange=args.arrange,
+        normalize=args.normalize,
+        max_cells=args.max_cells
     )

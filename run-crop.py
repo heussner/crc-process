@@ -11,13 +11,8 @@ parser.add_argument('-l', '--labels', help='If specific cells from run-callout.p
 parser.add_argument('-a', '--arrange', help='Arrange channels in specified order', action='store_true')
 parser.add_argument('-o', '--output', help='Path to top level directory to write sample-specific subdirectories of crops under')
 parser.add_argument('-n', '--normalize', help='Normalization method',choices=["robust", "percentile", "min_max"])
-parser.add_argument('-c', '--cpus', help='Number CPUs to request from scheduler', default=4, type=int)
-parser.add_argument('-m', '--mem', help='Memory to request from the scheduler (in GB)', default=64, type=int)
-parser.add_argument('-t', '--time', help='Time string to request from the scheduler', default='1:00:00', type=str)
 parser.add_argument('--crop-length', help="Maximum cell major axis length to crop", default=64, type=int)
-parser.add_argument('--skip', help="Skip scene 1", action='store_true')
 parser.add_argument('--subdirs', help='Files containing subdirectories to process', type=str, nargs="+")
-parser.add_argument('--exacloud', help='specifies running a scheduled job on exacloud', action='store_true')
 parser.add_argument('--clear-logs', help='Clear previous log files', action='store_true')
 args = parser.parse_args()
 
@@ -26,14 +21,7 @@ args.input = os.path.abspath(args.input)
 ld = make_log_dir()
 
 subdirs = os.listdir(args.input)
-if args.skip:
-    dirs = []
-    for s in subdirs:
-        if 's1' in s:
-            continue
-        else:
-            dirs.append(s)
-subdirs = dirs
+
 print("Found {} samples".format(len(subdirs)))
 
 fdir = os.path.dirname(os.path.realpath(__file__))
@@ -43,11 +31,11 @@ try:
     procs = []
     samps = []
     log_files = []
-    print("Starting {} cell crop processes...".format(len(subdirs)))
+    print(f"Starting {len(subdirs)} cell crop processes...")
     for s in tqdm(subdirs):
         
         mti_file = os.path.abspath(os.path.join(args.input, s, "registration", s + ".ome.tif"))
-        seg_file = os.path.abspath(os.path.join(args.input, s, "segmentation", s + ".ome.tif" + "_CELL__MESMER.tif"))## See top
+        seg_file = os.path.abspath(os.path.join(args.input, s, "segmentation", s + ".ome.tif" + "_CELL__MESMER.tif"))
         
         if args.labels:
             label_dir = os.path.abspath(os.path.join(args.input, s, "tables",s+'_CALLOUTS.pkl'))
@@ -70,9 +58,7 @@ try:
         crop_length = args.crop_length
         
         
-        python_script_args = "--segmentation_path {} --mti_path {} --labels {} --arrange {} --save_dir {} --save_prefix {} --crop_length {} --normalize {}".format(
-            seg_file, mti_file, label_dir, markers_dir, save_dir, s, crop_length, args.normalize
-        )
+        python_script_args = f"--segmentation_path {seg_file} --mti_path {mti_file} --labels {label_dir} --arrange {markers_dir} --save_dir {save_dir} --save_prefix {s} --crop_length {crop_length} --normalize {args.normalize}"
         
         bash_string = f'bash {bash_path} {python_script_args}'
         if args.exacloud: bash_string = "srun -p gpu --gres gpu:{} --time {} --mem {}gb {} {}".format(
@@ -87,7 +73,7 @@ try:
 
         out_file = open(
             os.path.join(args.input, s, "logs",
-            "run-crop-{}.out".format(dt.datetime.now().strftime("%m_%d_%Y_%H_%M"))),
+            f"run-crop-{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.out"),
             "w"
         )
         log_files.append(out_file)
@@ -104,25 +90,25 @@ try:
             procs.append(p)
             samps.append(s)
         except ValueError as e:
-            print("Error: {}".format(e))
-            print("Failed on sample {}".format(s))
+            print(f"Error: {e}")
+            print(f"Failed on sample {s}")
             print("#" * 80)
 
     print("Waiting for processes to complete...")
-    err_file = open("{}/run-crop_err_{}.log".format(ld, dt.datetime.now().strftime("%m_%d_%Y_%H_%M")), "w")
+    err_file = open(f"{ld}/run-crop_err_{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()
         if p.returncode != 0:
             found_err = True
             err_file.write(f"{samps[i]}\n")
-            err_file.write("Process Args: {}\n".format(p.args))
-            err_file.write("Error Code: {}\n".format(p.returncode))
+            err_file.write(f"Process Args: {p.args}\n")
+            err_file.write(f"Error Code: {p.returncode}\n")
             err_file.write("#" * 80 + "\n")
             err_file.flush()
     err_file.close()
     if found_err:
-        print("FAILURE: One or more processes exited with non-zero error codes. See {}".format(err_file.name))
+        print(f"FAILURE: One or more processes exited with non-zero error codes. See {err_file.name}")
     else:
         os.remove(err_file.name)
     

@@ -15,7 +15,7 @@ GIT_HASH="6266d7a3624407997846505f883d9be4612ec496"
 
 export PATH="/opt/singularity/current/bin:$PATH"
 
-export NXF_EXECUTOR=slurm
+export NXF_EXECUTOR=local
 export SINGULARITY_CACHEDIR=${NXF_HOME}
 export NXF_SINGULARITY_CACHEDIR=${NXF_HOME}
 export NXF_OPTS=$JVM_OPTS

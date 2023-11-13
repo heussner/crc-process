@@ -48,6 +48,19 @@ def write_viz_paths(args):
         for p in all_paths:
             f.write(p.replace(os.path.expanduser("~") + "/strgar", "") + "\n")
 
+def join_channels(impath, segpath_cell, savepath):
+    os.makedirs(os.path.join(savepath, "join"))
+    im = imread(impath)
+    cell = imread(segpath_cell).astype(np.uint32)
+    outfile = "joined.tif"
+    cell_bounds = find_boundaries(cell, connectivity=1, mode='outer')
+    cell_bounds = img_as_uint(cell_bounds)
+    cell_bounds = np.expand_dims(cell_bounds, 0)
+    im = np.append(im, cell_bounds, axis=0)
+    im = np.expand_dims(im,0)
+    imwrite(os.path.join(savepath, "join", outfile), im)
+    
+
 def split_channels(args):
     subdirs = get_subdirs(args)
     print("Splitting channels for {} samples".format(len(subdirs)))
@@ -74,7 +87,7 @@ def write_seg_bounds(args):
             raise ValueError("Please provide an output directory when using a cell size threshold")
         logfile = os.path.join(args.output, "excluded-count-{}-{}.txt".format(args.cell_size_threshold, dt.datetime.now().strftime("%m_%d_%Y_%H_%M")))
     for s in tqdm(subdirs):
-        seg = imread(os.path.join(args.input, s, "segmentation", s + ".ome.tif__MESMER.tif"))
+        seg = imread(os.path.join(args.input, s, "segmentation", s + ".ome.tif_CELL__MESMER.tif"))
         seg = np.squeeze(seg)
         if args.cell_size_threshold is not None:
             rps = pd.DataFrame(regionprops_table(seg, properties=["major_axis_length", "label"]))
@@ -127,8 +140,8 @@ def reorder_channels(args):
             
 def slack_notification(args):
     try:
-        slack_message = {'text': message}
-
+        slack_message = {'text': args}
+        webhook_url = 'https://hooks.slack.com/services/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'
         http = urllib3.PoolManager()
         response = http.request('POST',
                                 webhook_url,
@@ -225,7 +238,7 @@ def compute_major_axis_dist(args):
 
 if __name__ == "__main__":
 
-    parser = ArgumentParser(description='CRC Processing Utils')
+    parser = ArgumentParser(description='Processing Utils')
     parser.add_argument('-i', '--input', help='Date stamped directory containing subdirectories of inputs', required=True)
     parser.add_argument('-o', '--output', help='File or directory to write outptut to')
     parser.add_argument('--subdirs', help='Files containing subdirectories to process', type=str, nargs="+")
