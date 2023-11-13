@@ -1,8 +1,0 @@
-11_21_2022_PANC58_Spread_ECAD_Epcam_PanCK_CD45_s1
-Process Args: ['bash', '/home/groups/ChangLab/heussner/crc-process/tools/callout.sh', '--table', '/home/groups/ChangLab/heussner/crc-project/concdapi/2022_11_10/PANC/11_21_2022_PANC58_Spread_ECAD_Epcam_PanCK_CD45_s1/tables/11_21_2022_PANC58_Spread_ECAD_Epcam_PanCK_CD45_s1_THRESHOLDED.pkl', '--output', '/home/groups/ChangLab/heussner/crc-project/concdapi/2022_11_10/PANC/11_21_2022_PANC58_Spread_ECAD_Epcam_PanCK_CD45_s1/tables', '--markers', 'CD45', 'CK', '--PPR_thresholds', '0.5', '0.7', '--save_prefix', '11_21_2022_PANC58_Spread_ECAD_Epcam_PanCK_CD45_s1', '--compartment', 'whole-cell']
-Error Code: 1
-################################################################################
-11_21_2022_PANC57_Spread_ECAD_Epcam_PanCK_CD45_s1
-Process Args: ['bash', '/home/groups/ChangLab/heussner/crc-process/tools/callout.sh', '--table', '/home/groups/ChangLab/heussner/crc-project/concdapi/2022_11_10/PANC/11_21_2022_PANC57_Spread_ECAD_Epcam_PanCK_CD45_s1/tables/11_21_2022_PANC57_Spread_ECAD_Epcam_PanCK_CD45_s1_THRESHOLDED.pkl', '--output', '/home/groups/ChangLab/heussner/crc-project/concdapi/2022_11_10/PANC/11_21_2022_PANC57_Spread_ECAD_Epcam_PanCK_CD45_s1/tables', '--markers', 'CD45', 'CK', '--PPR_thresholds', '0.5', '0.7', '--save_prefix', '11_21_2022_PANC57_Spread_ECAD_Epcam_PanCK_CD45_s1', '--compartment', 'whole-cell']
-Error Code: 1
-################################################################################
