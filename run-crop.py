@@ -31,6 +31,7 @@ try:
     procs = []
     samps = []
     log_files = []
+    time = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
     print(f"Starting {len(subdirs)} cell crop processes...")
     for s in tqdm(subdirs):
         
@@ -61,8 +62,6 @@ try:
         python_script_args = f"--segmentation_path {seg_file} --mti_path {mti_file} --labels {label_dir} --arrange {markers_dir} --save_dir {save_dir} --save_prefix {s} --crop_length {crop_length} --normalize {args.normalize}"
         
         bash_string = f'bash {bash_path} {python_script_args}'
-        if args.exacloud: bash_string = "srun -p gpu --gres gpu:{} --time {} --mem {}gb {} {}".format(
-            args.gpu_str, args.time, str(args.mem), bash_path, python_script_args)
 
         if not os.path.exists(os.path.join(args.input, s, "logs")):
             os.makedirs(os.path.join(args.input, s, "logs"))
@@ -73,7 +72,7 @@ try:
 
         out_file = open(
             os.path.join(args.input, s, "logs",
-            f"run-crop-{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.out"),
+            f"run-crop-{time}.out"),
             "w"
         )
         log_files.append(out_file)
@@ -95,7 +94,7 @@ try:
             print("#" * 80)
 
     print("Waiting for processes to complete...")
-    err_file = open(f"{ld}/run-crop_err_{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.log", "w")
+    err_file = open(f"{ld}/run-crop_err_{time}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()

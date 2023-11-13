@@ -28,7 +28,8 @@ try:
     procs = []
     samps = []
     log_files = []
-    print("Starting {} detection processes...".format(len(subdirs)))
+    time = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
+    print(f"Starting {len(subdirs)} detection processes...")
     for s in tqdm(subdirs):
         
         table_file = os.path.abspath(os.path.join(args.input, s, "tables", s + "_THRESHOLDED.pkl"))
@@ -47,8 +48,11 @@ try:
         PPR_thresholds = []
         for m in markers:
             PPR_thresholds.append(PPR_dict[m])
-                                 
-        python_script_args = f"--table {table_file} --output {out_dir} --markers {" ".join([m for m in markers])} --PPR_thresholds {" ".join([str(t) for t in PPR_thresholds])} --save_prefix {s} --compartment {"whole-cell"}"
+        
+        PPR_string = " ".join([str(t) for t in PPR_thresholds])
+        markers_string = " ".join([m for m in markers])
+        
+        python_script_args = f"--table {table_file} --output {out_dir} --markers {markers_string} --PPR_thresholds {PPR_string} --save_prefix {s} --compartment {"whole-cell"}"
         
         bash_string = f'bash {bash_path} {python_script_args}'
 
@@ -62,7 +66,7 @@ try:
 
         out_file = open(
             os.path.join(args.input, s, "logs",
-            f"run-callout-{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.out"),
+            f"run-callout-{time}.out"),
             "w"
         )
         log_files.append(out_file)
@@ -84,7 +88,7 @@ try:
             print("#" * 80)
 
     print("Waiting for processes to complete...")
-    err_file = open(f"{ld}/run-callout_err_{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.log", "w")
+    err_file = open(f"{ld}/run-callout_err_{time}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()

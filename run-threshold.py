@@ -34,6 +34,7 @@ bash_path = os.path.join(fdir, "tools", "threshold.sh")
 try:
     procs = []
     log_files = []
+    time = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
     print(f"Starting {len(subdirs)} threshold processes...")
     for s in tqdm(subdirs):
 
@@ -46,7 +47,7 @@ try:
         
         out_file = open(
             os.path.join(args.input, s, "logs",
-            f"threshold-{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.out"),
+            f"threshold-{time}.out"),
             "w"
         )
         log_files.append(out_file)
@@ -68,7 +69,8 @@ try:
         zipped = sorted(zipped, key=lambda x: x[0])
         markers = [list(t) for t in zip(*zipped)][1]
         #markers_df.loc[markers_df["seg_type"] == "membrane"] for only membrane
-        python_script_args = f"-i {image_file} -s seg_dir} -t {table_file} -m {" ".join([str(i) for i in markers]} -o {out_dir} -n{s} -c {args.compartment}"
+        markers_string = " ".join([str(i) for i in markers])
+        python_script_args = f"-i {image_file} -s seg_dir} -t {table_file} -m {markers_string} -o {out_dir} -n {s} -c {args.compartment}"
        
         bash_string = f'bash {bash_path} {python_script_args}'
         
@@ -90,7 +92,7 @@ try:
             print("#" * 80)
 
     print("Waiting for processes to complete...")
-    err_file = open(f"{ld}/run-threshold_err_{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.log", "w")
+    err_file = open(f"{ld}/run-threshold_err_{time}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()

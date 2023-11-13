@@ -5,17 +5,10 @@ from subprocess import Popen
 import shutil
 import datetime as dt
 import sys
-from tifffile import imread, imwrite
-from skimage.segmentation import find_boundaries
-from skimage import img_as_uint
-import numpy as np
-from utils import make_log_dir, get_subdirs, slack_notification, join_channels
+from utils import make_log_dir, get_subdirs
 
 parser = argparse.ArgumentParser(description='Make pyramidal OME TIFFs from CZI files for viewing with Viv')
 parser.add_argument('-i', '--input', help='Date stamped directory containing subdirectories of inputs', required=True)
-parser.add_argument('-c', '--cpus', help='Number CPUs to request from scheduler', default=1, type=int)
-parser.add_argument('-m', '--mem', help='Memory to request from the scheduler (in GB)', default=64, type=int)
-parser.add_argument('-t', '--time', help='Time string to request from the scheduler', default='4:00:00', type=str)
 parser.add_argument('--raw', help='Make from raw rather than corrected data', action='store_true')
 parser.add_argument('--segmentation', help='Include segmentation in the output', action='store_true')
 parser.add_argument('--large-cell-file', help='Include segmentation from large cells file only', action='store_true')
@@ -45,7 +38,6 @@ try:
     tmp_dirs = []
     viz_files = []
     log_files = []
-    temp_paths = []
     cleanup = []
     if args.write_paths:
         if args.raw:
@@ -59,7 +51,6 @@ try:
                 args.write_dir, "viz_paths_{}.txt".format(dt.datetime.now().strftime("%m_%d_%Y_%H_%M")))
 
     print("Starting {} processes to make OME TIFFs...".format(len(subdirs)))
-    slack_notification("Starting {} processes to make OME TIFFs...".format(len(subdirs)))
     print("INFO: This may take some time if --segmentation flag is set or previous tmp files exist")
     if args.raw and args.segmentation:
         raise ValueError(
@@ -78,14 +69,27 @@ try:
             log_str = "make-viz-raw"
             tmp_dir = os.path.join(args.input, s, "viz", s + "__RAW__TMP")
         elif args.segmentation:
-            seg_path_cell = os.path.join(args.input, s, "segmentation", s+'.ome.tif_CELL__MESMER.tif')
-            temp_path = os.path.join(args.input, s, "viz")
-            fpath = os.path.join(args.input, s, "registration", s + ".ome.tif")
-            join_channels(fpath, seg_path_cell, temp_path)
-            fpath = os.path.join(temp_path, "join", "joined.tif")
+            split_dir = os.path.join(args.input, s, "viz", "split")
+            pattern_file = os.path.join(split_dir, "input.pattern")
+            files = [f for f in os.listdir(split_dir) if s in f]
+            fname = files[0][:-5] 
+            nchannels = len(files)
+            fpath = os.path.join(split_dir, s + f"_c<0-{nchannels}>.tif")
+            if args.large_cell_file:
+                seg_file = os.path.join(split_dir, "segmentation_bounds_gt{}um.tif".format(round(args.cell_size_threshold)))
+                viz_file = os.path.join(args.input, s, "viz", s + f"__SEG_LARGECELL_{round(args.cell_size_threshold)}.ome.tiff")
+                log_str = "make-viz-seg-largecell"
+            else:
+                seg_file = os.path.join(split_dir, "segmentation_bounds.tif")
+                viz_file = os.path.join(args.input, s, "viz", s + "__SEG.ome.tiff")
+                log_str = "make-viz-seg"
+            seg_channel = os.path.join(split_dir, fname + f"{nchannels}.tif")
+            cleanup.append(seg_channel)
+            shutil.copy(seg_file, seg_channel)
+            with open(pattern_file, "w") as f:
+                f.write(fpath)
+            fpath = pattern_file
             tmp_dir = os.path.join(args.input, s, "viz", s + "__SEG__TMP")
-            viz_file = os.path.join(args.input, s, "viz", s + "_SEG.ome.tiff")
-            log_str = "make-viz-seg"
         else:
             fpath = os.path.join(args.input, s, "registration", s + ".ome.tif")
             viz_file = os.path.join(args.input, s, "viz", s + ".ome.tiff")
@@ -95,7 +99,6 @@ try:
         viz_files.append(viz_file)
         
         tmp_dirs.append(tmp_dir)
-        temp_paths.append(temp_path)
         if os.path.isdir(tmp_dir):
             shutil.rmtree(tmp_dir, ignore_errors=True)
         bash_string = f'bash {bash_path} {fpath} {tmp_dir} {viz_file}'
@@ -132,7 +135,6 @@ try:
             print("#" * 80)
     
     print("Waiting for processes to complete...")
-    slack_notification("Waiting for processes to complete...")
     err_file = open("{}/make-viz_err_{}.log".format(ld, dt.datetime.now().strftime("%m_%d_%Y_%H_%M")), "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
@@ -150,16 +152,13 @@ try:
     err_file.close()
     if found_err:
         print("FAILURE: One or more processes exited with non-zero error codes. See {}".format(err_file.name))
-        slack_notification("FAILURE: One or more processes exited with non-zero error codes. See {}".format(err_file.name))
     else:
         os.remove(err_file.name)
     
     print("Cleaning up tmp data directories...")
     for d in tqdm(tmp_dirs):
         shutil.rmtree(d)
-    if args.segmentation:
-        for p in tqdm(temp_paths):
-            shutil.rmtree(os.path.join(p, "join"))
+
     for f in log_files:
         f.close()
 

@@ -35,6 +35,7 @@ bash_path = os.path.join(fdir, "tools", "mesmer.sh")
 try:
     procs = []
     log_files = []
+    time = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
     print(f"Starting {len(subdirs)} Mesmer segmentation processes...")
     for s in tqdm(subdirs):
         
@@ -50,7 +51,7 @@ try:
         
         out_file = open(
             os.path.join(args.input, s, "logs",
-            f"mesmer-{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.out",
+            f"mesmer-{time}.out",
             "w"
         )
         log_files.append(out_file)
@@ -72,7 +73,8 @@ try:
         if args.nuclear_only:
             mem_idx = [nuc_idx]
         
-        python_script_args = f"-i {in_file} -o {out_dir} -n {nuc_idx} -m {" ".join([str(m) for m in mem_idx])} -c {args.compartment}"
+        markers_string = " ".join([str(m) for m in mem_idx])
+        python_script_args = f"-i {in_file} -o {out_dir} -n {nuc_idx} -m {markers_string} -c {args.compartment}"
         if not proj_type is None:
             python_script_args += " -p {}".format(proj_type)
         
@@ -96,7 +98,7 @@ try:
             print("#" * 80)
 
     print("Waiting for processes to complete...")
-    err_file = open(f"{ld}/run-mesmer_err_{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.log", "w")
+    err_file = open(f"{ld}/run-mesmer_err_{time}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()

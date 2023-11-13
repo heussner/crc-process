@@ -31,6 +31,7 @@ try:
 
     procs = []
     log_files = []
+    time = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
     print(f"Starting {len(subdirs)} feature table processes...")
     for s in tqdm(subdirs):
 
@@ -43,7 +44,7 @@ try:
         
         out_file = open(
             os.path.join(args.input, s, "logs",
-            f"table-{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.out",
+            f"table-{time}.out",
             "w"
         )
         log_files.append(out_file)
@@ -64,8 +65,11 @@ try:
         zipped = zip(marker_indexes, markers)
         zipped = sorted(zipped, key=lambda x: x[0])
         markers = [list(t) for t in zip(*zipped)][1]
+        
+        markers_string = " ".join([str(i) for i in markers])
+        props_string = " ".join([str(i) for i in args.regionprops])
 
-        python_script_args = f"-i {image_file} -s {seg_dir} -o {out_dir} -m {" ".join([str(i) for i in markers])} -n {s} -c {args.compartment} -p {" ".join([str(i) for i in args.regionprops])}"
+        python_script_args = f"-i {image_file} -s {seg_dir} -o {out_dir} -m {markers_string} -n {s} -c {args.compartment} -p {props_string}"
        
         bash_string = f"bash {bash_path} {python_script_args}"
         
@@ -86,7 +90,7 @@ try:
             print("#" * 80)
 
     print("Waiting for processes to complete...")
-    err_file = open(f"{ld}/run-table_err_{dt.datetime.now().strftime("%m_%d_%Y_%H_%M")}.log", "w")
+    err_file = open(f"{ld}/run-table_err_{time}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()
