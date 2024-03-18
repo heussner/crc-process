@@ -34,7 +34,7 @@ Finally, (and **IMPORTANTLY**) run `setup.sh` to test you are able to process Ne
 
 ```
 chmod +x setup.sh
-srun -c 4 --mem 64gb setup.sh
+bash setup.sh
 ```
 
 After completion, `ls $NXF_HOME` should show the following files:
@@ -84,27 +84,33 @@ cycle,channel,marker_name,seg_type,projection
 
 Before running any code please review the main source files and their command line usage, which includes documentation. At a high level, here are descriptions of the function of each script and the order you probably want to use them in when processing PBMC samples for analysis / modelling with a VAE. If you are working with tissue slides you probably don't need to do anything with `run-crop.py` -- the MCMICRO illumination correction and stitching sequence along with Mesmer segmentation should be sufficient. 
 
-a. `make-inputs.py`: create new directory structure, one for each input samples. All processed files, intermediate files, log files will live under the subdirectory named after the sample in question. The `-o` flag indicates the parent folder for all sample-specific subdirectories. In our experience using the `PROJECT-DATA` folder as in the above example makes sense.
+1. `make-inputs.py`: create new directory structure, one for each input samples. All processed files, intermediate files, log files will live under the subdirectory named after the sample in question. The `-o` flag indicates the parent folder for all sample-specific subdirectories. In our experience using the `PROJECT-DATA` folder as in the above example makes sense.
 
-b. `make-viz.py` (optional): create Avivator compatible images from raw samples (with `--raw` flag).
+2. `make-viz.py` (optional): create Avivator compatible images from raw samples (with `--raw` flag).
 
-c. `run-mcmicro.py`: perform illumination correction and stitching. When running multiple samples simultaneously this is liable to fail due to multiple Nextflow processes trying to obtain a lock on the `labsyspharm/mcmicro` github repository. The present solution is to add a short delay between parallel job invocations; however, this is not robust to SLURM queueing delay. See Known Issues section for details.
+3. `run-mcmicro.py`: perform illumination correction and stitching. When running multiple samples simultaneously this is liable to fail due to multiple Nextflow processes trying to obtain a lock on the `labsyspharm/mcmicro` github repository. The present solution is to add a short delay between parallel job invocations; however, this is not robust to SLURM queueing delay. See Known Issues section for details.
 
-d. `make-viz.py` (optional): create Avivator compatible images from corrected data.
+4. `make-viz.py` (optional): create Avivator compatible images from corrected data.
 
-e.`run-mesmer.py`: segment the corrected image data. The `--compartment` flag can be used to specify whole-cell or nuclear segmentation.
+5.`run-mesmer.py`: segment the corrected image data. The `--compartment` flag can be used to specify whole-cell or nuclear segmentation.
 
-f. `utils.py -- methods `split_channels`, `write_seg_bounds` (optional): to visualize segmentations you first need to split the image into separate data channels and save segmentation cell boundaries as another single channel image. These separate data channels can later be combined as an Avivator compatible image.
+6. `utils.py -- methods `split_channels`, `write_seg_bounds` (optional): to visualize segmentations you first need to split the image into separate data channels and save segmentation cell boundaries as another single channel image. These separate data channels can later be combined as an Avivator compatible image.
 
-g. `make-viz.py` (optional): create Avivator compatible images including segmentation boundaries (using `--segmentation`).
+7. `make-viz.py` (optional): create Avivator compatible images including segmentation boundaries (using `--segmentation`).
 
-h. `run-crop.py` (PBMC only): construct single cell image dataset by cropping out cell instances.
+8. `run-crop.py` (PBMC only): construct single cell image dataset by cropping out cell instances.
 
-In addition, `utils.py` contains many useful utilities including `write_viz_paths`, `compute_major_axis_dist`, `count_false_positive`. The second two are likely not applicable to tissue (only PBMC). `write_viz_paths` compiles all paths to a single file for easy copy and paste into a tunneled Avivator session URL bar. Incidentally, `tools/http-serv.sh` can be used to start an http server for hosting images for Avivator. `http-serv.sh` should be run with sbatch and a single argument `/home`. Instructions for ssh tunneling the correct port will be included in the sbatch print out file. More details on visualization included below.
+9. 'run-table.py': extract single cell feature (mean intensity, centroid, area, etc)
+
+10. 'run-threshold.py' (optional): threshold the PanCK/CD45 channels (for CHC detection)
+
+11. 'run-callout.py' (optional) : identify likely-CHCs (for CHC detection)
+
+12. 'run-extract.py' (optional): extract CHCs from label mask
 
 ## High-level Picture
 
-Most of the heavy-lifting steps in the pipeline will launch many SLURM jobs (one for each data sample) in parallel from the respective python scripts. This includes `run-mcmicro.py`, `run-mesmer.py`, `run-crop.py`, `make-plot.py`, and `make-viz.py`. Take a look at any one of these scripts and you will see they share a common structure that can be summarized in pseudocode as:
+Most of the heavy-lifting steps in the pipeline will launch many jobs (one for each data sample) in parallel from the respective python scripts. This includes `run-mcmicro.py`, `run-mesmer.py`, `run-crop.py`, and `make-viz.py`. Take a look at any one of these scripts and you will see they share a common structure that can be summarized in pseudocode as:
 
 ```
 from subprocess import Popen ## Library method for launching processes from a python script
