@@ -17,7 +17,6 @@ parser.add_argument('-c', '--compartment',help='Compartment to measure', choices
 parser.add_argument('-p', '--properties',help='Regionprops',nargs='+', default=["label","centroid","area","mean_intensity","equivalent_diameter","major_axis_length","eccentricity"], type=str)
 args = parser.parse_args()
 
-#load masks and images
 masks = os.listdir(args.segmentation)
 im = imread(args.image)
 
@@ -31,7 +30,7 @@ else:
 
 print("Loaded masks from {args.segmentation}")
 
-#make feature tables, rename columns to specify compartment/marker
+# Make feature tables, rename columns to specify compartment/marker
 if args.compartment == "both":
     nuc_table = pd.DataFrame(regionprops_table(nuc_mask.astype(int), im, properties=args.properties))
     p_names = nuc_table.columns.values.tolist()

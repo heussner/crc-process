@@ -31,7 +31,7 @@ try:
 
     procs = []
     log_files = []
-    time = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
+    time_ = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
     print(f"Starting {len(subdirs)} feature table processes...")
     for s in tqdm(subdirs):
 
@@ -44,7 +44,7 @@ try:
         
         out_file = open(
             os.path.join(args.input, s, "logs",
-            f"table-{time}.out",
+            f"table-{time_}.out"),
             "w"
         )
         log_files.append(out_file)
@@ -90,7 +90,7 @@ try:
             print("#" * 80)
 
     print("Waiting for processes to complete...")
-    err_file = open(f"{ld}/run-table_err_{time}.log", "w")
+    err_file = open(f"{ld}/run-table_err_{time_}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()

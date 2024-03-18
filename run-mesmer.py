@@ -13,7 +13,7 @@ import time
 
 parser = argparse.ArgumentParser(description='Run Mesmer Segmentation')
 parser.add_argument('-i', '--input', help='Date stamped directory containing subdirectories of inputs', required=True)
-parser.add_argument('--compartment', help='Compartment to segment', choices=["whole-cell", "nuclear", "both"], required=True, type=str)
+parser.add_argument('--compartment', help='Compartment to segment', choices=["whole-cell", "nuclear", "both"], type=str, default="both")
 parser.add_argument('--subdirs', help='Files containing subdirectories to process', type=str, nargs="+")
 parser.add_argument('--clear-logs', help='Clear previous log files', action='store_true')
 parser.add_argument('--nuclear-only', help='Run segmentation with nuclear marker only', action='store_true')
@@ -21,7 +21,7 @@ args = parser.parse_args()
 
 args.input = os.path.abspath(args.input)
 
-assert not (args.compartment == "whole-cell" and args.nuclear_only), "If using nuclear marker only you should be running nuclei segmentation"
+#assert not (args.compartment == "whole-cell" and args.nuclear_only), "If using nuclear marker only you should be running nuclei segmentation"
 
 ld = make_log_dir()
 
@@ -35,11 +35,9 @@ bash_path = os.path.join(fdir, "tools", "mesmer.sh")
 try:
     procs = []
     log_files = []
-    time = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
+    time_ = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
     print(f"Starting {len(subdirs)} Mesmer segmentation processes...")
     for s in tqdm(subdirs):
-        
-        time.sleep(960)
 
         if not os.path.exists(os.path.join(args.input, s, "logs")):
             os.makedirs(os.path.join(args.input, s, "logs"))
@@ -50,8 +48,7 @@ try:
                     os.remove(os.path.join(args.input, s, "logs", f))
         
         out_file = open(
-            os.path.join(args.input, s, "logs",
-            f"mesmer-{time}.out",
+            os.path.join(args.input, s, "logs",f"mesmer-{time_}.out"),
             "w"
         )
         log_files.append(out_file)
@@ -97,8 +94,9 @@ try:
             print(f"Failed on sample {s}")
             print("#" * 80)
 
+        #time.sleep(1600)
     print("Waiting for processes to complete...")
-    err_file = open(f"{ld}/run-mesmer_err_{time}.log", "w")
+    err_file = open(f"{ld}/run-mesmer_err_{time_}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()

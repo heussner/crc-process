@@ -4,13 +4,13 @@ from subprocess import Popen
 from tqdm import tqdm
 import argparse
 from utils import make_log_dir, get_subdirs
-## TODO: Add compartment functionality
+
 parser = argparse.ArgumentParser(description='Crop cells')
 parser.add_argument('-i', '--input', help='Date stamped directory containing subdirectories of inputs', required=True)
 parser.add_argument('-l', '--labels', help='If specific cells from run-callout.py need to be cropped', action='store_true')
 parser.add_argument('-a', '--arrange', help='Arrange channels in specified order', action='store_true')
 parser.add_argument('-o', '--output', help='Path to top level directory to write sample-specific subdirectories of crops under')
-parser.add_argument('-n', '--normalize', help='Normalization method',choices=["robust", "percentile", "min_max"])
+parser.add_argument('-n', '--normalize', help='Normalization method',choices=["robust", "percentile", "min_max", None], default=None)
 parser.add_argument('--crop-length', help="Maximum cell major axis length to crop", default=64, type=int)
 parser.add_argument('--subdirs', help='Files containing subdirectories to process', type=str, nargs="+")
 parser.add_argument('--clear-logs', help='Clear previous log files', action='store_true')
@@ -20,8 +20,15 @@ args.input = os.path.abspath(args.input)
 
 ld = make_log_dir()
 
-subdirs = os.listdir(args.input)
+subdirs = get_subdirs(args)
 
+nsubs = []
+for s in subdirs:
+    if 's1' in s:
+        continue
+    else:
+        nsubs.append(s)
+subdirs = nsubs
 print("Found {} samples".format(len(subdirs)))
 
 fdir = os.path.dirname(os.path.realpath(__file__))
@@ -31,10 +38,9 @@ try:
     procs = []
     samps = []
     log_files = []
-    time = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
+    time_ = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
     print(f"Starting {len(subdirs)} cell crop processes...")
     for s in tqdm(subdirs):
-        
         mti_file = os.path.abspath(os.path.join(args.input, s, "registration", s + ".ome.tif"))
         seg_file = os.path.abspath(os.path.join(args.input, s, "segmentation", s + ".ome.tif" + "_CELL__MESMER.tif"))
         
@@ -71,8 +77,7 @@ try:
                     os.remove(os.path.join(args.input, s, "logs", f))
 
         out_file = open(
-            os.path.join(args.input, s, "logs",
-            f"run-crop-{time}.out"),
+            os.path.join(args.input, s, "logs", f"crop-{time_}.out"),
             "w"
         )
         log_files.append(out_file)
@@ -94,7 +99,7 @@ try:
             print("#" * 80)
 
     print("Waiting for processes to complete...")
-    err_file = open(f"{ld}/run-crop_err_{time}.log", "w")
+    err_file = open(f"{ld}/run-crop_err_{time_}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()

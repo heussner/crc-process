@@ -21,7 +21,7 @@ parser.add_argument('-c', '--compartment',help='Compartment to segment', choices
 parser.add_argument('--mpp', help="Microns per pixel", default=0.325, type=float)
 
 args = parser.parse_args()
-os.environ["CUDA_VISIBLE_DEVICES"]="1,2,3,4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 im = imread(args.input)
 print("Loaded image from {}".format(args.input))
 im = np.squeeze(im)
@@ -41,7 +41,7 @@ membrane = im[args.membrane_channel, :, :]
 print("Loaded membrane channel indices {}".format(args.membrane_channel))
 print("Membrane channel shape: {}".format(membrane.shape))
 if membrane.ndim != 3:
-    raise ValueError("Membrane channel must be 3D, found shap {}".format(membrane.shape))
+    raise ValueError("Membrane channel must be 3D, found shape {}".format(membrane.shape))
 
 if membrane.shape[0] == 1:
     print("Found single membrane channel")
@@ -60,7 +60,7 @@ print("Final input image shape: {}".format(im.shape))
 print("Running Mesmer...")
 from deepcell.applications import Mesmer
 app = Mesmer()
-labeled_image = app.predict(im, compartment=args.compartment, image_mpp=args.mpp, batch_size=1, postprocess_kwargs_whole_cell={'interior_threshold': 0.2},preprocess_kwargs={'threshold':True,'percentile':99.9,'normalize':True,'kernel_size':128})
+labeled_image = app.predict(im, compartment=args.compartment, image_mpp=args.mpp, batch_size=1, postprocess_kwargs_whole_cell={'interior_threshold': 0.2},preprocess_kwargs={'threshold':True,'percentile':99.99,'normalize':True,'kernel_size':128})
 labeled_image = np.squeeze(labeled_image)
 print("Mesmer label image output shape: {}, dtype: {}".format(labeled_image.shape, labeled_image.dtype))
 if args.compartment == "both":
@@ -99,8 +99,11 @@ def refine_masks(mask_cell, mask_nuc, dilation_radius=3):
     mask_nuc_final = mask_nuc_align + mask_nuc_wo_cell
     
     #remove cells without nuclei
-    max_ID = np.amax(mask_nuc_final)
-    mask_cell_final[mask_cell_final>max_ID] = 0
+    stats = regionprops_table(mask_nuc_final.astype(np.uint32), properties=['label'])
+    mask = np.isin(mask_cell_final, stats['label'])
+    mask_cell_final[~mask] = 0
+    #max_ID = np.amax(mask_nuc_final)
+    #mask_cell_final[mask_cell_final>max_ID] = 0
         
     return mask_cell_final, mask_nuc_final
 

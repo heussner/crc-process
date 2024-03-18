@@ -28,7 +28,7 @@ try:
 
     procs = []
     log_files = []
-    time = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
+    time_ = dt.datetime.now().strftime("%m_%d_%Y_%H_%M")
     print(f"Starting {len(subdirs)} MCMICRO processes...")
     for s in tqdm(subdirs):
 
@@ -56,8 +56,7 @@ try:
                     os.remove(os.path.join(args.input, s, "logs", f))
 
         out_file = open(
-            os.path.join(args.input, s, "logs",
-            f"mcmicro-{time}.out"),
+            os.path.join(args.input, s, "logs", f"mcmicro-{time_}.out"),
             "w"
         )
         out_file.write(bash_string + "\n")
@@ -78,7 +77,7 @@ try:
             print("#" * 80)
 
     print("Waiting for processes to complete...")
-    err_file = open(f"{ld}/run-mcmicro_err_{time}.log", "w")
+    err_file = open(f"{ld}/run-mcmicro_err_{time_}.log", "w")
     found_err = False
     for i, p in enumerate(tqdm(procs)):
         p.wait()

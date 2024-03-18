@@ -5,7 +5,7 @@ from subprocess import Popen
 import shutil
 import datetime as dt
 import sys
-from utils import make_log_dir, get_subdirs
+from utils import make_log_dir, get_subdirs, join_channels
 
 parser = argparse.ArgumentParser(description='Make pyramidal OME TIFFs from CZI files for viewing with Viv')
 parser.add_argument('-i', '--input', help='Date stamped directory containing subdirectories of inputs', required=True)
@@ -17,7 +17,6 @@ parser.add_argument('--subdirs', help='Files containing subdirectories to proces
 parser.add_argument('--clear-logs', help='Clear previous log files', action='store_true')
 parser.add_argument('--write-paths', help='Make a file containing paths to all VIV compatible files', action='store_true')
 parser.add_argument('--write-dir', help='Directory for writing paths file if --write-paths is set', required='--write-paths' in sys.argv)
-parser.add_argument('--exacloud', help='specifices running with slurm on exacloud', action='store_true')
 args = parser.parse_args()
 
 args.input = os.path.abspath(args.input)
@@ -69,27 +68,16 @@ try:
             log_str = "make-viz-raw"
             tmp_dir = os.path.join(args.input, s, "viz", s + "__RAW__TMP")
         elif args.segmentation:
-            split_dir = os.path.join(args.input, s, "viz", "split")
-            pattern_file = os.path.join(split_dir, "input.pattern")
-            files = [f for f in os.listdir(split_dir) if s in f]
-            fname = files[0][:-5] 
-            nchannels = len(files)
-            fpath = os.path.join(split_dir, s + f"_c<0-{nchannels}>.tif")
-            if args.large_cell_file:
-                seg_file = os.path.join(split_dir, "segmentation_bounds_gt{}um.tif".format(round(args.cell_size_threshold)))
-                viz_file = os.path.join(args.input, s, "viz", s + f"__SEG_LARGECELL_{round(args.cell_size_threshold)}.ome.tiff")
-                log_str = "make-viz-seg-largecell"
-            else:
-                seg_file = os.path.join(split_dir, "segmentation_bounds.tif")
-                viz_file = os.path.join(args.input, s, "viz", s + "__SEG.ome.tiff")
-                log_str = "make-viz-seg"
-            seg_channel = os.path.join(split_dir, fname + f"{nchannels}.tif")
-            cleanup.append(seg_channel)
-            shutil.copy(seg_file, seg_channel)
-            with open(pattern_file, "w") as f:
-                f.write(fpath)
-            fpath = pattern_file
+            seg_cell_file = os.path.join(args.input, s, "segmentation", s + ".ome.tif_CELL__MESMER.tif")
+            seg_nuc_file = os.path.join(args.input, s, "segmentation", s + ".ome.tif_NUC__MESMER.tif")
+            im_file = os.path.join(args.input, s, "viz", s + "__ORIG.ome.tiff")
+            fpath = os.path.join(args.input, s, "registration", s + ".ome.tif")
+            join_channels(fpath, seg_cell_file, seg_nuc_file, os.path.join(args.input, s, "viz"))
+            temp_dir = os.path.join(args.input, s, "viz", "join")
+            fpath = os.path.join(temp_dir,"joined.tif")
+            viz_file = os.path.join(args.input, s, "viz", s + "_SEG.ome.tiff")
             tmp_dir = os.path.join(args.input, s, "viz", s + "__SEG__TMP")
+            log_str = "make-viz-seg"
         else:
             fpath = os.path.join(args.input, s, "registration", s + ".ome.tif")
             viz_file = os.path.join(args.input, s, "viz", s + ".ome.tiff")
@@ -99,10 +87,10 @@ try:
         viz_files.append(viz_file)
         
         tmp_dirs.append(tmp_dir)
+        #tmp_dirs.append(temp_dir)
         if os.path.isdir(tmp_dir):
             shutil.rmtree(tmp_dir, ignore_errors=True)
         bash_string = f'bash {bash_path} {fpath} {tmp_dir} {viz_file}'
-        if args.exacloud: bash_string = "srun --time {} -c {} --mem {}gb {} {} {} {}".format(args.time, str(args.cpus), str(args.mem), bash_path, fpath, tmp_dir, viz_file)
 
         if not os.path.exists(os.path.join(args.input, s, "logs")):
             os.makedirs(os.path.join(args.input, s, "logs"))
@@ -164,6 +152,9 @@ try:
 
     for f in cleanup:
         os.remove(f)
+    
+    if args.segmentation:
+        shutil.rmtree(temp_dir)
 
 except KeyboardInterrupt:
     print("WARNING: Running processes will continue to run")

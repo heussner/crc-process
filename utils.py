@@ -29,9 +29,11 @@ def get_subdirs(args):
         for s in args.subdirs:
             if s == "QC":
                 continue
+            #else:
+                #with open(s, 'r') as f:
+                #subdirs += [x.strip() for x in f.readlines()]
             else:
-                with open(s, 'r') as f:
-                    subdirs += [x.strip() for x in f.readlines()]
+                subdirs.append(s)
     return sorted(subdirs)
 
 def write_viz_paths(args):
@@ -48,15 +50,20 @@ def write_viz_paths(args):
         for p in all_paths:
             f.write(p.replace(os.path.expanduser("~") + "/strgar", "") + "\n")
 
-def join_channels(impath, segpath_cell, savepath):
+def join_channels(impath, segpath_cell, segpath_nuc, savepath):
     os.makedirs(os.path.join(savepath, "join"))
     im = imread(impath)
     cell = imread(segpath_cell).astype(np.uint32)
+    nuc = imread(segpath_nuc).astype(np.uint32)
     outfile = "joined.tif"
     cell_bounds = find_boundaries(cell, connectivity=1, mode='outer')
     cell_bounds = img_as_uint(cell_bounds)
     cell_bounds = np.expand_dims(cell_bounds, 0)
+    nuc_bounds = find_boundaries(nuc, connectivity=1, mode='outer')
+    nuc_bounds = img_as_uint(nuc_bounds)
+    nuc_bounds = np.expand_dims(nuc_bounds, 0)
     im = np.append(im, cell_bounds, axis=0)
+    im = np.append(im, nuc_bounds, axis=0)
     im = np.expand_dims(im,0)
     imwrite(os.path.join(savepath, "join", outfile), im)
     

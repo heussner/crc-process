@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import os
 import pandas as pd
-from skimage.io import imread, imshow
+from skimage.io import imread
 from skimage.measure import regionprops_table
 import pickle
 
@@ -17,25 +17,20 @@ parser.add_argument('-c', '--compartment',help='Compartment to measure', choices
 parser.add_argument('-p', '--properties',help='Regionprops',nargs='+', default=["label","centroid","area","mean_intensity","equivalent_diameter","major_axis_length","eccentricity"], type=str)
 args = parser.parse_args()
 
-#load masks and images
 masks = os.listdir(args.segmentation)
 im = imread(args.image)
 
 if args.compartment == "both":
     nuc_mask = imread(os.path.join(args.segmentation, [i for i in masks if "NUC" in i][0]))
     cell_mask = imread(os.path.join(args.segmentation, [i for i in masks if "CELL" in i][0]))
-    print(nuc_mask.shape)
-    print(im.shape)
 elif args.compartment == "nuclear":
     nuc_mask = imread(os.path.join(args.segmentation, [i for i in masks if "NUC" in i][0]))
 else:
     cell_mask = imread(os.path.join(args.segmentation, [i for i in masks if "CELL" in i][0]))
 
-print("Loaded masks from {}".format(args.segmentation))
+print("Loaded masks from {args.segmentation}")
 
-print("Making feature tables...")
-
-#make feature tables, rename columns to specify compartment/marker
+# Make feature tables, rename columns to specify compartment/marker
 if args.compartment == "both":
     nuc_table = pd.DataFrame(regionprops_table(nuc_mask.astype(int), im, properties=args.properties))
     p_names = nuc_table.columns.values.tolist()
