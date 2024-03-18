@@ -1,4 +1,4 @@
-# CRC R01 Processing Utilities
+# Colorectal cancer PBMC processing utilities
 
 ## Installation
 
