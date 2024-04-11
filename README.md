@@ -100,13 +100,13 @@ Before running any code please review the main source files and their command li
 
 8. `run-crop.py` (PBMC only): construct single cell image dataset by cropping out cell instances.
 
-9. 'run-table.py': extract single cell feature (mean intensity, centroid, area, etc)
+9. `run-table.py`: extract single cell feature (mean intensity, centroid, area, etc)
 
-10. 'run-threshold.py' (optional): threshold the PanCK/CD45 channels (for CHC detection)
+10. `run-threshold.py` (optional): threshold the PanCK/CD45 channels (for CHC detection)
 
-11. 'run-callout.py' (optional) : identify likely-CHCs (for CHC detection)
+11. `run-callout.py` (optional) : identify likely-CHCs (for CHC detection)
 
-12. 'run-extract.py' (optional): extract CHCs from label mask
+12. `run-extract.py` (optional): extract CHCs from label mask
 
 ## High-level Picture
 
