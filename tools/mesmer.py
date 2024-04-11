@@ -7,7 +7,7 @@ from skimage.morphology import dilation, disk
 from skimage.segmentation import expand_labels
 from skimage.exposure import rescale_intensity
 
-parser = argparse.ArgumentParser(description='Run Mesmer on single sample')
+parser = argparse.ArgumentParser(description='Run Mesmer on a single image')
 parser.add_argument('-i', '--input', help='Input image file', required=True)
 parser.add_argument('-o', '--output', help='Output directory', required=True)
 parser.add_argument('-n', '--nuclear-channel', help='Nuclear marker channel index (starting from 0)', 
@@ -21,7 +21,7 @@ parser.add_argument('-c', '--compartment',help='Compartment to segment', choices
 parser.add_argument('--mpp', help="Microns per pixel", default=0.325, type=float)
 
 args = parser.parse_args()
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="0" # for ChangLab server, select first GPU
 im = imread(args.input)
 print("Loaded image from {}".format(args.input))
 im = np.squeeze(im)
@@ -111,14 +111,14 @@ if args.compartment == "both":
     print("Matching nucleus and cell masks...")
     cell, nuc = refine_masks(labeled_image[:,:,0], labeled_image[:,:,1], dilation_radius=3)
     save_file = os.path.join(args.output, args.input.split('/')[-1] + "_NUC__MESMER.tif")
-    print("Saving cell output to {}".format(save_file))
+    print("Saving nucleus output to {}".format(save_file))
     imwrite(save_file, nuc)
     save_file = os.path.join(args.output, args.input.split('/')[-1] + "_CELL__MESMER.tif")
-    print("Saving nucleus output to {}".format(save_file))
+    print("Saving cell output to {}".format(save_file))
     imwrite(save_file, cell)
 elif args.compartment == "nuclear":
     save_file = os.path.join(args.output, args.input.split('/')[-1] + "_NUC__MESMER.tif")
-    print("Saving nuclei output to {}".format(save_file))
+    print("Saving nucleus output to {}".format(save_file))
     imwrite(save_file, labeled_image)
 else:
     save_file = os.path.join(args.output, args.input.split('/')[-1] + "_CELL__MESMER.tif")

@@ -9,6 +9,8 @@ import pandas as pd
 
 parser = argparse.ArgumentParser(description='Run MCMICRO')
 parser.add_argument('-i', '--input', help='Date stamped directory containing subdirectories of inputs', required=True)
+parser.add_argument('--jvm-xmx', help='JVM max heap size (in GB)', default=256, type=int)
+parser.add_argument('--nf-mem', help='Memory limit for the nextflow process (in GB)', default=256, type=int)
 parser.add_argument('--subdirs', help='Files containing subdirectories to process if not all', type=str, nargs="+")
 parser.add_argument('--clear-logs', help='Clear previous log files', action='store_true')
 args = parser.parse_args()
@@ -32,9 +34,9 @@ try:
     print(f"Starting {len(subdirs)} MCMICRO processes...")
     for s in tqdm(subdirs):
 
-        time.sleep(60)
-
         config_path = os.path.join(args.input, s, 'x.config')
+        with open(config_path, 'w') as f:
+            f.write("process.memory = '{}GB'\n".format(args.nf_mem))
 
         markers_file = os.path.join(args.input, s, 'markers.csv')
         markers = pd.read_csv(markers_file)
@@ -75,6 +77,8 @@ try:
             print("Error: {}".format(e))
             print("Failed on sample {}".format(s))
             print("#" * 80)
+
+        #time.sleep(3800)
 
     print("Waiting for processes to complete...")
     err_file = open(f"{ld}/run-mcmicro_err_{time_}.log", "w")

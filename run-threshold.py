@@ -9,7 +9,7 @@ from utils import make_log_dir, get_subdirs
 import numpy as np
 import time
 
-parser = argparse.ArgumentParser(description='Run thresholding')
+parser = argparse.ArgumentParser(description='Threshold markers')
 parser.add_argument('-i', '--input', help='Date stamped directory containing subdirectories of inputs', required=True)
 parser.add_argument('--subdirs', help='Files containing subdirectories to process', type=str, nargs="+")
 parser.add_argument('--clear-logs', help='Clear previous log files', action='store_true')
@@ -56,10 +56,10 @@ try:
 
         markers_df = pd.read_csv(os.path.join(args.input, s, "markers.csv"))
         markers_df = markers_df.replace({np.nan: None})
-        #thresholds all markers
+        # thresholds all markers
         markers = markers_df["marker_name"].tolist()
         marker_indexes = markers_df["channel"].tolist()
-        #arrange marker names in order of channels
+        # arrange marker names in order of channels
         zipped = zip(marker_indexes, markers)
         zipped = sorted(zipped, key=lambda x: x[0])
         markers = [list(t) for t in zip(*zipped)][1]
@@ -86,7 +86,7 @@ try:
             print(f"Failed on sample {s}")
             print("#" * 80)
         
-        time.sleep(300)
+        #time.sleep(800)
     print("Waiting for processes to complete...")
     err_file = open(f"{ld}/run-threshold_err_{time_}.log", "w")
     found_err = False

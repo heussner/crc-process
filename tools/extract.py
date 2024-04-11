@@ -13,7 +13,7 @@ import math
 import pickle
 import argparse
 
-parser = argparse.ArgumentParser(description='Extract single cells from annotations')
+parser = argparse.ArgumentParser(description='Extract annotated single cells for a single sample')
 parser.add_argument('-i', '--image', help='Image file',required=True)
 parser.add_argument('-s','--segmentation', help='Cell segmentation file', required=True)
 parser.add_argument('-a','--annotation', help='Cell annotation file', required=True)
@@ -44,9 +44,6 @@ def view_selection(ax, x, y, distance, intensity_image, arrow_image, mask_image,
     x1,x2 = int(max(0,(x-distance))), int(max(0,(x+distance)))
     y1,y2 = int(max(0,(y-distance))), int(max(0,(y+distance)))
     arrow = arrow_image[x1:x2,y1:y2].copy()
-    print(intensity_image.shape)
-    print((x1,x2))
-    print((y1,y2))
     try:
         image = img_as_ubyte(intensity_image[:,x1:x2,y1:y2])
         new_image = image.copy()
@@ -65,7 +62,6 @@ def view_selection(ax, x, y, distance, intensity_image, arrow_image, mask_image,
         ax.axis('off')
     except Exception as e: 
         print(e)
-    #ax.set_title(str(index)+':'+str(cellID))
 
 def view_options(ax, x,y,distance,intensity_image,arrow_image,mask_image,cellID,index):
     """

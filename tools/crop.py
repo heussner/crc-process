@@ -20,7 +20,7 @@ parser.add_argument("--save_prefix",type=str,required=True,help="Prefix string f
 parser.add_argument("--fix_orientation",type=bool,default=False,help="Fix orientation of crops w.r.t. major axis")
 parser.add_argument("--dtype",type=str,choices=["uint16", "uint8"],default="uint16",help="Data type to save cropped images with (uint8 or uint16)")
 parser.add_argument("--labels",type=str,default=None,help="Path to dict of specific labels to crop")
-parser.add_argument("--arrange",type=str,default=None,help="Path to markers file")
+parser.add_argument("--markers",type=str,default=None,help="Path to markers file")
 parser.add_argument("--crop_length",default=64,type=int,help="Crop dimension. If not provided will be computed. See data.data_bbox_max")
 parser.add_argument("--normalize",default=None,type=str,help="Normalization method")
 parser.add_argument("--max_cells",type=int,default=None,help="Max number of cells to crop from image. If none, crop all.")
@@ -65,16 +65,13 @@ def segmentation_crops_to_disk(
 
     mti = load_mti(mti_path)
     mti = as_dtype(mti, dtype)
-    
-    if args.arrange:
-        markers_df = pd.read_csv(args.arrange)
-        mti = order_channels(markers_df, mti)
+    mti = order_channels(pd.read_csv(args.markers), mti)
     
     if normalize == 'percentile':
         print("Applying percentile saturation")
         mti = saturate(mti)
         print("Min-max scaling")
-        mti = min_max_scale(mti)
+        mti = min_max_scale(mti, segmentation)
 
     elif normalize == 'robust':
         print("Applying robust saturation")
@@ -90,11 +87,10 @@ def segmentation_crops_to_disk(
     else:
         print("Skipping normalization")
     
-    #mti = np.moveaxis(mti,0,2)
     check_shapes(mti.shape, segmentation.shape)
     make_save_dir(save_dir)
     
-    if args.labels != None:
+    if args.labels != 'None':
         with open(args.labels,'rb') as handle:
             label_dict = pickle.load(handle)
             
@@ -123,7 +119,7 @@ def segmentation_crops_to_disk(
 
                     rank = labels.index(r.label)
 
-                    save_crop(crop, save_dir, save_prefix, name, rank, r.label, r.centroid)
+                    save_crop(crop, save_dir, save_prefix, r.label, r.centroid, class_label=name, rank=rank)
 
                     num_saved += 1
 
@@ -196,7 +192,7 @@ def load_mti(mti_path: Text,) -> Tuple[np.ndarray, Any]:
         mti: np.ndarray = imread(mti_path).squeeze()
         mti = np.transpose(mti, (1, 2, 0))
         if len(mti.shape) == 2:
-            mti = mti[None, :, :]
+            mti = mti[:, :, None]
         elif len(mti.shape) != 3:
             raise ValueError(
                 f"Loaded MTI data from {mti_path} is inappropriate shape. Found"
@@ -419,16 +415,8 @@ def robust_saturate(
     for i in range(mti.shape[2]):
         
         fgd = np.where(seg.astype(int)==0, np.nan, mti[:,:,i].copy())
-        #mu_fgd = np.mean(fgd[~np.isnan(fgd)])
-        #std_fgd = np.std(fgd[~np.isnan(fgd)])
-        #bgd = np.where(seg.astype(int).copy()!=0, np.nan, mti[:,:,i].copy())
-        #mu_bgd = np.mean(bgd[~np.isnan(bgd)])
-        #std_bgd = np.std(bgd[~np.isnan(bgd)])
-        
-        #lower = int(max(0, mu_bgd - 3 * std_bgd))
         lower = int(0)
         upper = int(np.percentile(fgd[~np.isnan(fgd)], 99.9))
-        #upper = int(min(scale, 1.5*(mu_fgd + 3 * std_fgd)))
         upper_vals.append(upper)
         lower_vals.append(lower)
         mti[:, :, i][mti[:, :, i] <= lower] = lower
@@ -526,10 +514,10 @@ def save_crop(
     crop: np.ndarray,
     save_dir: Text,
     save_prefix: Text,
-    class_label: Text,
-    rank: int,
     region_lab: int,
     region_centroid: Tuple[float, float],
+    class_label=None,
+    rank=None,
 ):
     """Save crop array to disk
 
@@ -541,10 +529,14 @@ def save_crop(
         region_lab (int): Label of region inside crop
         region_centroid (Tuple[float, float]): Centroid of region inside crop
     """
-    file_name = (
-        save_prefix
-        + f"_CLASS_{class_label}_RANK_{rank}_REG_LABEL_{region_lab}_CENTROID_{int(region_centroid[0])}_{int(region_centroid[1])}.tiff"
-    )
+    if class_label != None:
+        file_name = (
+            save_prefix
+            + f"_CLASS_{class_label}_RANK_{rank}_REG_LABEL_{region_lab}_CENTROID_{int(region_centroid[0])}_{int(region_centroid[1])}.tiff"
+        )
+    else:
+        file_name = (
+            save_prefix+f'REG_LABEL_{region_lab}_CENTROID_{int(region_centroid[0])}_{int(region_centroid[1])}.tiff')
     save_path = os.path.join(save_dir, file_name)
     imwrite(save_path, crop)
 
@@ -587,16 +579,14 @@ def zero_orient(crop: np.ndarray, radians: float) -> np.ndarray:
     return rotated
 
 def order_channels(markers_df, mti):
-    #hard-coded channel order
-    order = {'DAPI':2,'CD45':1,'PanCK':0}
+    order = {'DAPI':0,'yH2AX':1,'Rad51':2,'Geminin':3} # hard-coded marker order
     ordered_mti = mti.copy()
     markers = zip(markers_df["channel"].tolist(),markers_df["marker_name"].tolist())
     markers = sorted(markers, key=lambda x: x[1])
-    
     for i, m in markers:
         if i != order[m]:
             ordered_mti[:,:,order[m]] = mti[:,:,i].copy()
-            print('moved ' + m + ' in position ' + str(i) + ' to position ' + str(order[m]))
+            print('Moved ' + m + ' in position ' + str(i) + ' to position ' + str(order[m]))
 
     return ordered_mti
 

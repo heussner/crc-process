@@ -14,6 +14,7 @@ import time
 parser = argparse.ArgumentParser(description='Run Mesmer Segmentation')
 parser.add_argument('-i', '--input', help='Date stamped directory containing subdirectories of inputs', required=True)
 parser.add_argument('--compartment', help='Compartment to segment', choices=["whole-cell", "nuclear", "both"], type=str, default="both")
+parser.add_argument('--mpp', help='Microns per pixel', default=0.325, type=float)
 parser.add_argument('--subdirs', help='Files containing subdirectories to process', type=str, nargs="+")
 parser.add_argument('--clear-logs', help='Clear previous log files', action='store_true')
 parser.add_argument('--nuclear-only', help='Run segmentation with nuclear marker only', action='store_true')
@@ -71,7 +72,7 @@ try:
             mem_idx = [nuc_idx]
         
         markers_string = " ".join([str(m) for m in mem_idx])
-        python_script_args = f"-i {in_file} -o {out_dir} -n {nuc_idx} -m {markers_string} -c {args.compartment}"
+        python_script_args = f"-i {in_file} -o {out_dir} -n {nuc_idx} -m {markers_string} -c {args.compartment} --mpp {args.mpp}"
         if not proj_type is None:
             python_script_args += " -p {}".format(proj_type)
         
@@ -94,7 +95,7 @@ try:
             print(f"Failed on sample {s}")
             print("#" * 80)
 
-        #time.sleep(1600)
+       # time.sleep(4800)
     print("Waiting for processes to complete...")
     err_file = open(f"{ld}/run-mesmer_err_{time_}.log", "w")
     found_err = False

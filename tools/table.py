@@ -19,6 +19,7 @@ args = parser.parse_args()
 
 masks = os.listdir(args.segmentation)
 im = imread(args.image)
+im = np.moveaxis(im, 0, 2)
 
 if args.compartment == "both":
     nuc_mask = imread(os.path.join(args.segmentation, [i for i in masks if "NUC" in i][0]))
@@ -50,7 +51,7 @@ if args.compartment == "both":
   
 elif args.compartment == "nuclear":
     nuc_table = pd.DataFrame(regionprops_table(nuc_mask.astype(int), im, properties=args.properties))
-                                    
+    p_names = nuc_table.columns.values.tolist()                                
     for p in p_names:
         nuc_table = nuc_table.rename(columns={p:'nucleus_'+p})
     

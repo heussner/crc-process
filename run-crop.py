@@ -42,7 +42,7 @@ try:
     print(f"Starting {len(subdirs)} cell crop processes...")
     for s in tqdm(subdirs):
         mti_file = os.path.abspath(os.path.join(args.input, s, "registration", s + ".ome.tif"))
-        seg_file = os.path.abspath(os.path.join(args.input, s, "segmentation", s + ".ome.tif" + "_CELL__MESMER.tif"))
+        seg_file = os.path.abspath(os.path.join(args.input, s, "segmentation", s + ".ome.tif" + "_NUC__MESMER.tif"))
         
         if args.labels:
             label_dir = os.path.abspath(os.path.join(args.input, s, "tables",s+'_CALLOUTS.pkl'))
