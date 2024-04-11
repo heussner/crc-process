@@ -1,5 +1,5 @@
-# CRC R01 Processing Utilities
-
+# Colorectal cancer PBMC processing utilities
+Used to detect circulating hybrid cells in https://onlinelibrary.wiley.com/doi/10.1002/cyto.a.24826?af=R
 ## Installation
 
 #### 1. Create a virtual environment + install dependencies:
@@ -190,4 +190,5 @@ Available on:
   http://127.0.0.1:8245
   http://172.20.15.173:8245
 ```
-
+## Acknowledgements
+We thank Luke Strgar for contributing to the image preprocessing and quality control code, Koei Chin for his advice on IF imaging,  the Advanced Light Microscopy Core at OHSU, and Nicole Giske, Ranish Patel, John Swain, Abby Gillingham, Ethan Lu, and Ashvin Nair for help in annotating CHCs. This work was supported by the National Institutes of Health (R01 CA253860). YHC acknowledges funding from the National Institute of Health (U2CCA233280) and Kuni Foundation Imagination Grants, ANA acknowledges funding from the National Cancer Institute (F31CA271676). The resources of the Exacloud high-performance computing environment developed jointly by OHSU and Intel and the technical support of the OHSU Advanced Computing Center is gratefully acknowledged. 
