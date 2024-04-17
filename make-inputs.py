@@ -27,13 +27,18 @@ if "markers.csv" in files:
     files.remove("markers.csv")
 print(f"Found {len(files)} data files")
 for f in tqdm(files):
-    subdir = os.path.join(args.output, f.replace(".czi", ""))
+    if '.czi' in f:
+        subdir = os.path.join(args.output, f.replace(".czi", ""))
+    elif '.ome.tif' in f:
+        subdir = os.path.join(args.output, f.replace(".ome.tif", ""))
     if not os.path.exists(subdir):
         os.makedirs(subdir)
     for d in dirs:
         if not os.path.exists(os.path.join(subdir, d)):
             os.makedirs(os.path.join(subdir, d))
 
+    if '.ome.tif' in f:
+        shutil.copy(os.path.join(args.input, f), os.path.join(subdir, 'registration', f))
     if not args.no_copy:
         shutil.copy(os.path.join(args.input, f), os.path.join(subdir, "raw"))
     if markers:

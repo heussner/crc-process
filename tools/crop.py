@@ -17,7 +17,7 @@ parser.add_argument("--segmentation_path", type=str, required=True, help="Path t
 parser.add_argument("--mti_path",type=str,required=True,help="Path to directory or file containing MTI data for cropping")
 parser.add_argument("--save_dir",type=str,required=True,help="Path to directory to save cropped data in")
 parser.add_argument("--save_prefix",type=str,required=True,help="Prefix string for cropped image file names")
-parser.add_argument("--fix_orientation",type=bool,default=False,help="Fix orientation of crops w.r.t. major axis")
+parser.add_argument("--fix_orientation",type=bool,default=True,help="Fix orientation of crops w.r.t. major axis")
 parser.add_argument("--dtype",type=str,choices=["uint16", "uint8"],default="uint16",help="Data type to save cropped images with (uint8 or uint16)")
 parser.add_argument("--labels",type=str,default=None,help="Path to dict of specific labels to crop")
 parser.add_argument("--markers",type=str,default=None,help="Path to markers file")
@@ -41,7 +41,7 @@ def segmentation_crops_to_disk(
     dtype: Text = "uint16",
     normalize=None,
     labels=None,
-    arrange=None,
+    markers=None,
     max_cells=None
 ) -> None:
 
@@ -65,7 +65,7 @@ def segmentation_crops_to_disk(
 
     mti = load_mti(mti_path)
     mti = as_dtype(mti, dtype)
-    mti = order_channels(pd.read_csv(args.markers), mti)
+    mti = order_channels(pd.read_csv(markers), mti)
     
     if normalize == 'percentile':
         print("Applying percentile saturation")
@@ -599,7 +599,7 @@ segmentation_crops_to_disk(
         crop_length=args.crop_length,
         dtype=args.dtype,
         labels=args.labels,
-        arrange=args.arrange,
+        markers=args.markers,
         normalize=args.normalize,
         max_cells=args.max_cells
     )

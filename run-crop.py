@@ -65,7 +65,7 @@ try:
         crop_length = args.crop_length
         
         
-        python_script_args = f"--segmentation_path {seg_file} --mti_path {mti_file} --labels {label_dir} --arrange {markers_dir} --save_dir {save_dir} --save_prefix {s} --crop_length {crop_length} --normalize {args.normalize}"
+        python_script_args = f"--segmentation_path {seg_file} --mti_path {mti_file} --labels {label_dir} --markers {markers_dir} --save_dir {save_dir} --save_prefix {s} --crop_length {crop_length} --normalize {args.normalize}"
         
         bash_string = f'bash {bash_path} {python_script_args}'
 
